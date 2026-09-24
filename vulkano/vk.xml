@@ -5343,6 +5343,12 @@ typedef void* <name>MTLSharedEvent_id</name>;
             <member optional="true"><type>void</type>*        <name>pNext</name></member>
             <member><type>VkBool32</type>                           <name>texelBufferAlignment</name></member>
         </type>
+        <type category="struct" name="VkPhysicalDeviceShaderFloat8FeaturesEXT" structextends="VkPhysicalDeviceFeatures2,VkPhysicalDeviceCooperativeMatrixFeaturesKHR">
+            <member values="VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT8_FEATURES_EXT"><type>VkStructureType</type> <name>sType</name></member>
+            <member optional="true" noautovalidity="true"><type>void</type>*     <name>pNext</name></member>
+            <member><type>VkBool32</type>                                        <name>shaderFloat8</name></member>
+            <member><type>VkBool32</type>                                        <name>shaderFloat8CooperativeMatrix</name></member>
+        </type>
         <type category="struct" name="VkPhysicalDeviceTexelBufferAlignmentProperties" structextends="VkPhysicalDeviceProperties2" returnedonly="true">
             <member values="VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES"><type>VkStructureType</type> <name>sType</name></member>
             <member optional="true"><type>void</type>*              <name>pNext</name></member>
@@ -24342,6 +24348,19 @@ typedef void* <name>MTLSharedEvent_id</name>;
                 <enum value="0"                                             name="VK_EXT_EXTENSION_573_SPEC_VERSION"/>
                 <enum value="&quot;VK_EXT_extension_573&quot;"               name="VK_EXT_EXTENSION_573_EXTENSION_NAME"/>
                 <enum bitpos="7" extends="VkShaderCreateFlagBitsEXT" name="VK_SHADER_CREATE_EXTENSION_573_BIT_EXT"/>
+            </require>
+        </extension>
+        <extension name="VK_EXT_shader_float8" number="568" author="EXT" contact="Kevin Petit @kpet" type="device" depends="VK_KHR_get_physical_device_properties2,VK_VERSION_1_1" supported="vulkan">
+            <require>
+                <enum value="1"                                          name="VK_EXT_SHADER_FLOAT8_SPEC_VERSION"/>
+                <enum value="&quot;VK_EXT_shader_float8&quot;"           name="VK_EXT_SHADER_FLOAT8_EXTENSION_NAME"/>
+                <enum offset="0" extends="VkStructureType"               name="VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT8_FEATURES_EXT"/>
+                <type name="VkPhysicalDeviceShaderFloat8FeaturesEXT"/>
+                <feature name="shaderFloat8" struct="VkPhysicalDeviceShaderFloat8FeaturesEXT"/>
+            </require>
+            <require depends="VK_KHR_cooperative_matrix">
+                <enum offset="2" extnumber="492" extends="VkComponentTypeKHR" name="VK_COMPONENT_TYPE_FLOAT8_E4M3_EXT"/>
+                <enum offset="3" extnumber="492" extends="VkComponentTypeKHR" name="VK_COMPONENT_TYPE_FLOAT8_E5M2_EXT"/>
             </require>
         </extension>
         <extension name="VK_KHR_extension_574" number="574" author="KHR" contact="Ralph Potter gitlab:@r_potter" supported="disabled">
