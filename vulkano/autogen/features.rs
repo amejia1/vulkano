@@ -463,8 +463,9 @@ fn features_members(types: &HashMap<&str, (&Type, Vec<&str>)>) -> Vec<FeaturesMe
         .chain(sorted_structs(types))
         .filter(|(ty, _)| {
             ty.name.as_deref() == Some("VkPhysicalDeviceFeatures")
-                || ty.structextends.as_deref()
-                    == Some("VkPhysicalDeviceFeatures2,VkDeviceCreateInfo")
+                || ty.structextends
+                    .as_deref()
+                    .is_some_and(|se| se.starts_with("VkPhysicalDeviceFeatures2"))
         })
         .for_each(|(ty, _)| {
             let vulkan_ty_name = ty.name.as_ref().unwrap();
@@ -737,7 +738,9 @@ fn sorted_structs<'a>(
     let mut structs: Vec<_> = types
         .values()
         .filter(|(ty, _)| {
-            ty.structextends.as_deref() == Some("VkPhysicalDeviceFeatures2,VkDeviceCreateInfo")
+            ty.structextends
+                .as_deref()
+                .is_some_and(|se| se.starts_with("VkPhysicalDeviceFeatures2"))
         })
         .collect();
 
