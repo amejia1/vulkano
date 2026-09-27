@@ -698,6 +698,7 @@ fn bit_enum_output(enums: &[(Ident, Vec<KindEnumMember>)]) -> TokenStream {
             }
 
             impl From<u32> for #name {
+                #[allow(unused_variables)]
                 fn from(value: u32) -> Self {
                     Self {
                         #(#from_items)*
@@ -745,10 +746,13 @@ fn bit_enum_members(grammar: &SpirvGrammar) -> Vec<(Ident, Vec<KindEnumMember>)>
                         return None;
                     }
 
-                    let name = match enumerant.enumerant.to_snake_case().as_str() {
-                        "const" => format_ident!("constant"),
-                        "not_na_n" => format_ident!("not_nan"),
-                        name => format_ident!("{}", name),
+                    let name = match enumerant.enumerant.as_str() {
+                        "2x2" => format_ident!("two_x2"),
+                        _ => match enumerant.enumerant.to_snake_case().as_str() {
+                            "const" => format_ident!("constant"),
+                            "not_na_n" => format_ident!("not_nan"),
+                            name => format_ident!("{}", name),
+                        },
                     };
 
                     let parameters = enumerant

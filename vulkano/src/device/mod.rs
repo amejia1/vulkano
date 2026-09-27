@@ -142,7 +142,8 @@ use crate::{
     RawFd, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk::{self, Handle};
+use ash::vk::{self, Handle};use ash::vk::TaggedStructure;
+
 use parking_lot::Mutex;
 use smallvec::{smallvec, SmallVec};
 use std::{
@@ -2261,15 +2262,18 @@ impl<'a> DeviceCreateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = device_group_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = features2_vk {
-            val_vk = val_vk.push_next(*next);
+            // `features2_vk` may itself carry a `pNext` chain of feature structs,
+            // so use `extend` (which links the chain) rather than `push`
+            // (which requires a null `pNext`).
+            val_vk = unsafe { val_vk.extend(*next) };
         }
 
         if let Some(next) = private_data_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

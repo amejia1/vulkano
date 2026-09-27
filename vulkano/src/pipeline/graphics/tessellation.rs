@@ -4,7 +4,8 @@ use crate::{
     device::Device, macros::vulkan_enum, Requires, RequiresAllOf, RequiresOneOf, ValidationError,
     Version,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 
 /// The state in a graphics pipeline describing the tessellation shader execution of a graphics
 /// pipeline.
@@ -122,7 +123,7 @@ impl<'a> TessellationState<'a> {
         let TessellationStateExtensionsVk { domain_origin_vk } = extensions_vk;
 
         if let Some(next) = domain_origin_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

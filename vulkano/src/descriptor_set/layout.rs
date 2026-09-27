@@ -12,7 +12,8 @@ use crate::{
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version, VulkanError,
     VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use smallvec::SmallVec;
 use std::{mem::MaybeUninit, num::NonZero, ptr, sync::Arc};
 
@@ -548,7 +549,7 @@ impl<'a> DescriptorSetLayoutCreateInfo<'a> {
         let DescriptorSetLayoutCreateInfoExtensionsVk { binding_flags_vk } = extensions_vk;
 
         if let Some(next) = binding_flags_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk
@@ -1447,7 +1448,7 @@ impl DescriptorSetLayoutSupport {
         } = extensions_vk;
 
         if let Some(next) = variable_descriptor_count_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

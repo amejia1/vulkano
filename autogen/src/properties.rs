@@ -55,7 +55,6 @@ impl DeviceProperties {
                 PropertiesStruct::new(struct_type_info, provided_by, extensions)
             })
             .collect();
-
         // Sort properties
         let mut properties = HashMap::default();
         let mut property_names = Vec::new();
@@ -394,6 +393,11 @@ impl PropertiesStruct {
 
         let struct_name_c = struct_type_info.name.as_ref().unwrap();
         let struct_name = struct_name_c.strip_prefix("Vk").unwrap();
+        // Skip structs containing a member type we cannot map to a Rust type
+        // (e.g. nested structs or new Vulkan types we do not support).
+        if members.iter().any(member_is_unmappable) {
+            return None;
+        }
         let mut has_pointer_property = false;
 
         let members = members
@@ -428,7 +432,12 @@ impl PropertiesStruct {
             provided_by: provided_by
                 .iter()
                 .map(|provided_by| {
-                    if let Some(version) = provided_by.strip_prefix("VK_VERSION_") {
+                    let version = provided_by
+                        .strip_prefix("VK_VERSION_")
+                        .or_else(|| provided_by.strip_prefix("VK_BASE_VERSION_"))
+                        .or_else(|| provided_by.strip_prefix("VK_COMPUTE_VERSION_"))
+                        .or_else(|| provided_by.strip_prefix("VK_GRAPHICS_VERSION_"));
+                    if let Some(version) = version {
                         let version = format_ident!("V{}", version);
                         quote! { api_version >= Version::#version }
                     } else {
@@ -583,7 +592,7 @@ impl PropertiesStruct {
 
         quote! {
             if let Some(next) = &mut extensions_vk.#var_name {
-                val_vk = val_vk.push_next(next);
+                val_vk = val_vk.push(next);
             }
         }
     }
@@ -848,7 +857,7 @@ impl Property {
                 .or_else(|| array_len(&definition.code).map(|(_, len)| len).ok())
         };
         let property_ty =
-            c_type_to_vulkano_type(property_name_c, ty_c, array_len, len_name.is_some());
+            c_type_to_vulkano_type(property_name_c, ty_c, array_len, len_name.is_some())?;
 
         let property_name = if len_name.is_some() {
             property_name_c.strip_prefix("p").unwrap()
@@ -1116,57 +1125,85 @@ fn c_type_to_vk_type(ty: &str) -> TokenStream {
     }
 }
 
+fn vulkano_type_basic(ty: &str) -> Option<TokenStream> {
+    // TODO: make this more automatic?
+    Some(match ty {
+        "float" => quote! { f32 },
+        "int32_t" => quote! { i32 },
+        "int64_t" => quote! { i64 },
+        "size_t" => quote! { usize },
+        "uint8_t" => quote! { u8 },
+        "uint32_t" => quote! { u32 },
+        "uint64_t" => quote! { u64 },
+        "VkBool32" => quote! { bool },
+        "VkConformanceVersion" => quote! { ConformanceVersion },
+        "VkDeviceSize" => quote! { DeviceSize },
+        "VkDriverId" => quote! { DriverId },
+        "VkExtent2D" => quote! { [u32; 2] },
+        "VkMemoryDecompressionMethodFlagsNV" => quote! { MemoryDecompressionMethods },
+        "VkOpticalFlowGridSizeFlagsNV" => quote! { OpticalFlowGridSizes },
+        "VkPhysicalDeviceType" => quote! { PhysicalDeviceType },
+        "VkPipelineRobustnessBufferBehavior" => quote! { PipelineRobustnessBufferBehavior },
+        "VkPipelineRobustnessBufferBehaviorEXT" => quote! { PipelineRobustnessBufferBehavior },
+        "VkPipelineRobustnessImageBehavior" => quote! { PipelineRobustnessImageBehavior },
+        "VkPipelineRobustnessImageBehaviorEXT" => quote! { PipelineRobustnessImageBehavior },
+        "VkPointClippingBehavior" => quote! { PointClippingBehavior },
+        "VkQueueFlags" => quote! { QueueFlags },
+        "VkRayTracingInvocationReorderModeNV" => quote! { RayTracingInvocationReorderMode },
+        "VkResolveModeFlags" => quote! { ResolveModes },
+        "VkSampleCountFlags" => quote! { SampleCounts },
+        "VkSampleCountFlagBits" => quote! { SampleCount },
+        "VkShaderCorePropertiesFlagsAMD" => quote! { ShaderCoreProperties },
+        "VkShaderFloatControlsIndependence" => quote! { ShaderFloatControlsIndependence },
+        "VkShaderStageFlags" => quote! { ShaderStages },
+        "VkSubgroupFeatureFlags" => quote! { SubgroupFeatures },
+        "VkImageLayout" => quote! { ImageLayout },
+        "VkImageUsageFlags" => quote! { ImageUsage },
+        "VkBufferUsageFlags" => quote! { BufferUsage },
+        "VkChromaLocation" => quote! { ChromaLocation },
+        "VkLayeredDriverUnderlyingApiMSFT" => quote! { LayeredDriverUnderlyingApi },
+        "VkPhysicalDeviceSchedulingControlsFlagsARM" => {
+            quote! { PhysicalDeviceSchedulingControlsFlags }
+        }
+        _ => return None,
+    })
+}
+fn is_mappable_property_type(ty_c: &str) -> bool {
+    // Types handled/skipped specially rather than mapped to a value type.
+    if matches!(
+        ty_c,
+        "char" | "void" | "VkStructureType" | "VkPhysicalDeviceLimits"
+            | "VkPhysicalDeviceSparseProperties"
+    ) {
+        return true;
+    }
+    vulkano_type_basic(ty_c).is_some()
+}
+fn member_is_unmappable(member: &TypeMember) -> bool {
+    let TypeMember::Definition(definition) = member else {
+        return false;
+    };
+    let Some(ty_c) = definition.markup.iter().find_map(|markup| match markup {
+        TypeMemberMarkup::Type(ty) => Some(ty.as_str()),
+        _ => None,
+    }) else {
+        return false;
+    };
+    !is_mappable_property_type(ty_c)
+}
 fn c_type_to_vulkano_type(
     name_c: &str,
     ty_c: &str,
     array_len: Option<&str>,
     has_len_field: bool,
-) -> TokenStream {
-    fn vulkano_type_basic(ty: &str) -> TokenStream {
-        // TODO: make this more automatic?
-        match ty {
-            "float" => quote! { f32 },
-            "int32_t" => quote! { i32 },
-            "int64_t" => quote! { i64 },
-            "size_t" => quote! { usize },
-            "uint8_t" => quote! { u8 },
-            "uint32_t" => quote! { u32 },
-            "uint64_t" => quote! { u64 },
-            "VkBool32" => quote! { bool },
-            "VkConformanceVersion" => quote! { ConformanceVersion },
-            "VkDeviceSize" => quote! { DeviceSize },
-            "VkDriverId" => quote! { DriverId },
-            "VkExtent2D" => quote! { [u32; 2] },
-            "VkMemoryDecompressionMethodFlagsNV" => quote! { MemoryDecompressionMethods },
-            "VkOpticalFlowGridSizeFlagsNV" => quote! { OpticalFlowGridSizes },
-            "VkPhysicalDeviceType" => quote! { PhysicalDeviceType },
-            "VkPipelineRobustnessBufferBehaviorEXT" => quote! { PipelineRobustnessBufferBehavior },
-            "VkPipelineRobustnessImageBehaviorEXT" => quote! { PipelineRobustnessImageBehavior },
-            "VkPointClippingBehavior" => quote! { PointClippingBehavior },
-            "VkQueueFlags" => quote! { QueueFlags },
-            "VkRayTracingInvocationReorderModeNV" => quote! { RayTracingInvocationReorderMode },
-            "VkResolveModeFlags" => quote! { ResolveModes },
-            "VkSampleCountFlags" => quote! { SampleCounts },
-            "VkSampleCountFlagBits" => quote! { SampleCount },
-            "VkShaderCorePropertiesFlagsAMD" => quote! { ShaderCoreProperties },
-            "VkShaderFloatControlsIndependence" => quote! { ShaderFloatControlsIndependence },
-            "VkShaderStageFlags" => quote! { ShaderStages },
-            "VkSubgroupFeatureFlags" => quote! { SubgroupFeatures },
-            "VkImageLayout" => quote! { ImageLayout },
-            "VkImageUsageFlags" => quote! { ImageUsage },
-            "VkBufferUsageFlags" => quote! { BufferUsage },
-            "VkChromaLocation" => quote! { ChromaLocation },
-            "VkLayeredDriverUnderlyingApiMSFT" => quote! { LayeredDriverUnderlyingApi },
-            "VkPhysicalDeviceSchedulingControlsFlagsARM" => {
-                quote! { PhysicalDeviceSchedulingControlsFlags }
-            }
-            _ => unimplemented!("{}", ty),
-        }
-    }
-
+) -> Option<TokenStream> {
     // Override the type for these specific properties.
     match name_c {
-        "apiVersion" => quote! { Version },
+        "apiVersion" => Some(quote! { Version }),
+        // The same property name appears in both DescriptorBuffer (size_t) and
+        // DescriptorHeap (VkDeviceSize) extension structs; pin to one type so the
+        // merged `DeviceProperties` field and every `from_vulkan` call agree.
+        "samplerDescriptorSize" | "tensorDescriptorSize" => Some(quote! { usize }),
         "bufferImageGranularity"
         | "minStorageBufferOffsetAlignment"
         | "minTexelBufferOffsetAlignment"
@@ -1175,18 +1212,17 @@ fn c_type_to_vulkano_type(
         | "optimalBufferCopyOffsetAlignment"
         | "optimalBufferCopyRowPitchAlignment"
         | "robustStorageBufferAccessSizeAlignment"
-        | "robustUniformBufferAccessSizeAlignment"
+        | "robustUniformBufferOffsetAlignment"
         | "storageTexelBufferOffsetAlignmentBytes"
         | "uniformTexelBufferOffsetAlignmentBytes"
         | "minPlacedMemoryMapAlignment" => {
-            quote! { DeviceAlignment }
+            Some(quote! { DeviceAlignment })
         }
         _ => {
             let inner = if ty_c == "char" && array_len.is_some() {
                 quote! { String }
             } else {
-                let element_ty = vulkano_type_basic(ty_c);
-
+                let element_ty = vulkano_type_basic(ty_c)?;
                 if let Some(array_len) = array_len {
                     let array_len: usize = match array_len {
                         "VK_LUID_SIZE" => 8,
@@ -1195,17 +1231,15 @@ fn c_type_to_vulkano_type(
                             .parse()
                             .unwrap_or_else(|_| unimplemented!("{}[{}]", ty_c, array_len)),
                     };
-
                     quote! { [#element_ty; #array_len] }
                 } else {
                     element_ty
                 }
             };
-
             if has_len_field {
-                quote! { Vec<#inner> }
+                Some(quote! { Vec<#inner> })
             } else {
-                inner
+                Some(inner)
             }
         }
     }

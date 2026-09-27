@@ -72,7 +72,8 @@ use crate::{
     RawFd, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use core::slice;
 use smallvec::SmallVec;
 use std::{mem::MaybeUninit, num::NonZero, ptr, sync::Arc, time::Duration};
@@ -1531,11 +1532,11 @@ impl<'a> SemaphoreCreateInfo<'a> {
         let SemaphoreCreateInfoExtensionsVk { export_vk, type_vk } = extensions_vk;
 
         if let Some(next) = export_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = type_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk
@@ -2380,7 +2381,7 @@ impl<'a> ExternalSemaphoreInfo<'a> {
         let ExternalSemaphoreInfoExtensionsVk { type_vk } = extensions_vk;
 
         if let Some(next) = type_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

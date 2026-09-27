@@ -3,7 +3,8 @@
 use crate::{
     device::Device, macros::vulkan_enum, Requires, RequiresAllOf, RequiresOneOf, ValidationError,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 
 /// The state in a graphics pipeline describing how the rasterization stage should behave.
 #[derive(Clone, Debug)]
@@ -429,11 +430,11 @@ impl<'a> RasterizationState<'a> {
         } = extensions_vk;
 
         if let Some(next) = line_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = conservative_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

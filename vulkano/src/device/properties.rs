@@ -18,6 +18,7 @@ use crate::{
     DeviceSize, Version,
 };
 use ash::vk;
+use ash::vk::TaggedStructure;
 use std::ffi::c_char;
 
 include!(crate::autogen_output!("properties.rs"));
@@ -77,6 +78,13 @@ impl FromVulkan<usize> for usize {
     #[inline]
     fn from_vulkan(val: usize) -> Option<Self> {
         Some(val)
+    }
+}
+
+impl FromVulkan<u64> for usize {
+    #[inline]
+    fn from_vulkan(val: u64) -> Option<Self> {
+        Some(val as usize)
     }
 }
 

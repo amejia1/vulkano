@@ -23,7 +23,8 @@ use crate::{
     DebugWrapper, ExtensionProperties, Requires, RequiresAllOf, RequiresOneOf, Validated,
     ValidationError, Version, VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use parking_lot::RwLock;
 #[cfg(feature = "raw_window_handle")]
 use raw_window_handle::{HandleError, HasDisplayHandle, RawDisplayHandle};
@@ -103,34 +104,32 @@ impl PhysicalDevice {
                 .map(|property| property.extension_name.as_str()),
         );
 
-        let supported_features;
-        let properties;
-        let memory_properties;
-        let queue_family_properties;
-
         // Get the remaining infos.
         // If possible, we use VK_KHR_get_physical_device_properties2.
-        if api_version >= Version::V1_1
-            || instance
-                .enabled_extensions()
-                .khr_get_physical_device_properties2
-        {
-            supported_features = unsafe {
-                Self::get_features2(handle, instance, api_version, &supported_extensions)
+        let (supported_features, properties, memory_properties, queue_family_properties) =
+            if api_version >= Version::V1_1
+                || instance
+                    .enabled_extensions()
+                    .khr_get_physical_device_properties2
+            {
+                (
+                    unsafe {
+                        Self::get_features2(handle, instance, api_version, &supported_extensions)
+                    },
+                    unsafe {
+                        Self::get_properties2(handle, instance, api_version, &supported_extensions)
+                    },
+                    unsafe { Self::get_memory_properties2(handle, instance) },
+                    unsafe { Self::get_queue_family_properties2(handle, instance) },
+                )
+            } else {
+                (
+                    unsafe { Self::get_features(handle, instance) },
+                    unsafe { Self::get_properties(handle, instance) },
+                    unsafe { Self::get_memory_properties(handle, instance) },
+                    unsafe { Self::get_queue_family_properties(handle, instance) },
+                )
             };
-            properties = unsafe {
-                Self::get_properties2(handle, instance, api_version, &supported_extensions)
-            };
-            memory_properties = unsafe { Self::get_memory_properties2(handle, instance) };
-            queue_family_properties =
-                unsafe { Self::get_queue_family_properties2(handle, instance) };
-        } else {
-            supported_features = unsafe { Self::get_features(handle, instance) };
-            properties = unsafe { Self::get_properties(handle, instance) };
-            memory_properties = unsafe { Self::get_memory_properties(handle, instance) };
-            queue_family_properties =
-                unsafe { Self::get_queue_family_properties(handle, instance) };
-        };
 
         Ok(Arc::new(PhysicalDevice {
             handle,
@@ -550,7 +549,7 @@ impl PhysicalDevice {
     #[inline]
     pub unsafe fn memory_budget_unchecked(&self) -> MemoryBudget {
         let mut budget_vk = MemoryBudget::to_mut_vk2();
-        let mut properties2_vk = MemoryProperties::to_mut_vk2().push_next(&mut budget_vk);
+        let mut properties2_vk = MemoryProperties::to_mut_vk2().push(&mut budget_vk);
 
         let fns = self.instance.fns();
         if self.instance.api_version() >= Version::V1_1 {

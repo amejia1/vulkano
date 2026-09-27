@@ -104,7 +104,8 @@ use crate::{
     sync::HostAccessError,
     DeviceSize, Validated, ValidationError, Version, VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use std::{
     cmp,
     mem::ManuallyDrop,
@@ -890,7 +891,7 @@ impl MemoryRequirements {
         let MemoryRequirements2ExtensionsVk { dedicated_vk } = extensions_vk;
 
         if let Some(next) = dedicated_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

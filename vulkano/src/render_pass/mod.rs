@@ -29,7 +29,8 @@ use crate::{
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version, VulkanError,
     VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use foldhash::HashMap;
 use smallvec::SmallVec;
 use std::{
@@ -1960,11 +1961,11 @@ impl<'a> RenderPassCreateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = input_attachment_aspect_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = multiview_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk
@@ -2747,7 +2748,7 @@ impl AttachmentDescription<'_> {
         let AttachmentDescription2ExtensionsVk { stencil_layout_vk } = extensions_vk;
 
         if let Some(next) = stencil_layout_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk
@@ -3687,7 +3688,7 @@ impl<'a> SubpassDescription<'a> {
         } = extensions_vk;
 
         if let Some(next) = depth_stencil_resolve_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk
@@ -4261,7 +4262,7 @@ impl AttachmentReference<'_> {
         let AttachmentReference2ExtensionsVk { stencil_layout_vk } = extensions_vk;
 
         if let Some(next) = stencil_layout_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk
@@ -4644,7 +4645,7 @@ impl SubpassDependency<'_> {
         let SubpassDependency2ExtensionsVk { memory_barrier_vk } = extensions_vk;
 
         if let Some(next) = memory_barrier_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

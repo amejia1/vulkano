@@ -118,7 +118,8 @@ use crate::{
     },
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use foldhash::HashMap;
 use fragment_shading_rate::FragmentShadingRateState;
 use smallvec::SmallVec;
@@ -2483,15 +2484,15 @@ impl<'a> GraphicsPipelineCreateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = discard_rectangle_state_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = fragment_shading_rate_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = rendering_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

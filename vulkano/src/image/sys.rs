@@ -33,7 +33,8 @@ use crate::{
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version, VulkanError,
     VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use smallvec::{smallvec, SmallVec};
 use std::{marker::PhantomData, mem::MaybeUninit, num::NonZero, ptr, sync::Arc};
 
@@ -341,7 +342,7 @@ impl RawImage {
 
             let next = plane_info_vk
                 .insert(vk::ImagePlaneMemoryRequirementsInfo::default().plane_aspect(plane_aspect));
-            info_vk = info_vk.push_next(next);
+            info_vk = info_vk.push(next);
         }
 
         let mut memory_requirements2_extensions_vk =
@@ -1005,7 +1006,7 @@ impl RawImage {
                 let mut info_vk = allocation.to_vk_bind_image_memory_info(self.handle);
 
                 if let Some(next) = plane_info_vk {
-                    info_vk = info_vk.push_next(next);
+                    info_vk = info_vk.push(next);
                 }
 
                 info_vk
@@ -3153,23 +3154,23 @@ impl<'a> ImageCreateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = drm_format_modifier_explicit_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = drm_format_modifier_list_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = external_memory_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = format_list_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = stencil_usage_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

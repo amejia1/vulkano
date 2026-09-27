@@ -9,7 +9,8 @@ use crate::{
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version, VulkanError,
     VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use smallvec::SmallVec;
 use std::{cell::Cell, marker::PhantomData, mem::MaybeUninit, num::NonZero, ptr, slice, sync::Arc};
 
@@ -398,7 +399,7 @@ impl DescriptorPool {
                     vk::DescriptorSetVariableDescriptorCountAllocateInfo::default()
                         .descriptor_counts(&variable_descriptor_counts),
                 );
-                info_vk = info_vk.push_next(next);
+                info_vk = info_vk.push(next);
             }
 
             output.reserve(layouts_vk.len());
@@ -767,7 +768,7 @@ impl<'a> DescriptorPoolCreateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = inline_uniform_block_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

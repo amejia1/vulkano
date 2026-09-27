@@ -18,7 +18,8 @@ use crate::{
     DeviceSize, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use std::{marker::PhantomData, mem::MaybeUninit, num::NonZero, ptr, sync::Arc};
 
 /// A raw buffer, with no memory backing it.
@@ -982,7 +983,7 @@ impl<'a> BufferCreateInfo<'a> {
         let BufferCreateInfoExtensionsVk { external_memory_vk } = extensions_vk;
 
         if let Some(next) = external_memory_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

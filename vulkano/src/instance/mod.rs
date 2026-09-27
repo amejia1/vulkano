@@ -89,7 +89,8 @@ use crate::{
     VulkanObject,
 };
 pub use crate::{fns::InstanceFunctions, version::Version};
-use ash::vk::{self, Handle};
+use ash::vk::{self, Handle};use ash::vk::TaggedStructure;
+
 use parking_lot::RwLock;
 use smallvec::SmallVec;
 use std::{
@@ -1263,13 +1264,13 @@ impl<'a> InstanceCreateInfo<'a> {
             validation_features_vk,
         } = extensions_vk;
 
-        // push_next adds in reverse
+        // push adds in reverse
         for next in debug_utils_messengers_vk.iter_mut().rev() {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = validation_features_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

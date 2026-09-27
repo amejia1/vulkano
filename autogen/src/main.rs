@@ -180,7 +180,11 @@ impl<'r> VkRegistryData<'r> {
             if let RegistryChild::Types(types) = child {
                 for ty in types.children.iter() {
                     if let TypesChild::Type(ty) = ty {
-                        if ty.api.as_deref() != Some("vulkan") {
+                        if !ty
+                            .api
+                            .as_deref()
+                            .is_some_and(|s| s.split(',').any(|s| s == "vulkan"))
+                        {
                             continue;
                         }
                         if let TypeSpec::Code(code) = &ty.spec {

@@ -91,7 +91,8 @@ use crate::{
     shader::spirv::ImageFormat,
     DeviceSize, Requires, RequiresAllOf, RequiresOneOf, ValidationError, Version,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use std::marker::PhantomData;
 
 include!(crate::autogen_output!("formats.rs"));
@@ -280,6 +281,10 @@ pub enum NumericFormat {
     /// Unsigned integer where R, G, B components represent a normalized floating-point value in
     /// the sRGB color space, while the A component is a simple normalized value as in `UNORM`.
     SRGB,
+    /// Signed fixed-point value (e.g. `VK_FORMAT_R16G16_SFIXED5_NV`).
+    SFIXED5,
+    /// Boolean value (e.g. `VK_FORMAT_R8_BOOL_ARM`).
+    BOOL,
 }
 
 impl NumericFormat {
@@ -293,8 +298,8 @@ impl NumericFormat {
             | NumericFormat::SSCALED
             | NumericFormat::USCALED
             | NumericFormat::SRGB => NumericType::Float,
-            NumericFormat::SINT => NumericType::Int,
-            NumericFormat::UINT => NumericType::Uint,
+            NumericFormat::SINT | NumericFormat::SFIXED5 => NumericType::Int,
+            NumericFormat::UINT | NumericFormat::BOOL => NumericType::Uint,
         }
     }
 }
@@ -344,6 +349,7 @@ pub(crate) enum FormatCompatibilityInner {
     Class_D32S8,
     Class_64bit_R10G10B10A10,
     Class_64bit_R12G12B12A12,
+    Class_64bit_R14G14B14A14,
     Class_BC1_RGB,
     Class_BC1_RGBA,
     Class_BC2,
@@ -357,11 +363,21 @@ pub(crate) enum FormatCompatibilityInner {
     Class_ETC2_EAC_RGBA,
     Class_EAC_R,
     Class_EAC_RG,
+    Class_ASTC_3x3x3,
+    Class_ASTC_4x3x3,
     Class_ASTC_4x4,
+    Class_ASTC_4x4x3,
+    Class_ASTC_4x4x4,
     Class_ASTC_5x4,
+    Class_ASTC_5x4x4,
     Class_ASTC_5x5,
+    Class_ASTC_5x5x4,
+    Class_ASTC_5x5x5,
     Class_ASTC_6x5,
+    Class_ASTC_6x5x5,
     Class_ASTC_6x6,
+    Class_ASTC_6x6x5,
+    Class_ASTC_6x6x6,
     Class_ASTC_8x5,
     Class_ASTC_8x6,
     Class_ASTC_8x8,
@@ -391,12 +407,14 @@ pub(crate) enum FormatCompatibilityInner {
     Class_12bit_2plane_420,
     Class_16bit_3plane_420,
     Class_16bit_2plane_420,
+    Class_14bit_2plane_420,
     Class_8bit_3plane_422,
     Class_8bit_2plane_422,
     Class_10bit_3plane_422,
     Class_10bit_2plane_422,
     Class_12bit_3plane_422,
     Class_12bit_2plane_422,
+    Class_14bit_2plane_422,
     Class_16bit_3plane_422,
     Class_16bit_2plane_422,
     Class_8bit_3plane_444,
@@ -840,15 +858,15 @@ impl FormatProperties {
         } = extensions_vk;
 
         if let Some(next) = drm_format_modifier_properties_list_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = drm_format_modifier_properties_list2_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = format_properties3_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

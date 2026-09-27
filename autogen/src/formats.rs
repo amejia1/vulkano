@@ -827,9 +827,9 @@ fn formats_members(
                     });
                 } else {
                     let prefix = match numeric_type.to_string().as_str() {
-                        "SFLOAT" => "f",
-                        "SINT" | "SNORM" | "SSCALED" => "i",
-                        "UINT" | "UNORM" | "USCALED" | "SRGB" => "u",
+                        "SFLOAT" | "UFLOAT" => "f",
+                        "SINT" | "SNORM" | "SSCALED" | "SFIXED5" => "i",
+                        "UINT" | "UNORM" | "USCALED" | "SRGB" | "BOOL" => "u",
                         _ => unreachable!(),
                     };
                     let bits = member.components[0];
@@ -960,14 +960,18 @@ fn formats_members(
 
                                     match extension.ext_type.as_deref() {
                                         Some("device") => {
-                                            requires_one_of
-                                                .device_extensions
-                                                .push(extension_name);
+                                            if !requires_one_of.device_extensions.contains(&extension_name) {
+                                                requires_one_of
+                                                    .device_extensions
+                                                    .push(extension_name);
+                                            }
                                         }
                                         Some("instance") => {
-                                            requires_one_of
-                                                .instance_extensions
-                                                .push(extension_name);
+                                            if !requires_one_of.instance_extensions.contains(&extension_name) {
+                                                requires_one_of
+                                                    .instance_extensions
+                                                    .push(extension_name);
+                                            }
                                         }
                                         _ => (),
                                     }

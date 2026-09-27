@@ -92,89 +92,90 @@ fn spirv_reqs_output(members: &[SpirvReqsMember], is_extension: bool) -> TokenSt
                 quote! { Capability::#name }
             };
 
-            if !requires_one_of.is_empty() {
-                let &RequiresOneOf {
-                    api_version,
-                    ref device_extensions,
-                    instance_extensions: _,
-                    ref device_features,
-                } = requires_one_of;
-
-                let condition_items = api_version
-                    .iter()
-                    .map(|version| {
-                        let version = format_ident!("V{}_{}", version.0, version.1);
-                        quote! { api_version >= crate::Version::#version }
-                    })
-                    .chain(device_extensions.iter().map(|name| {
-                        let ident = format_ident!("{}", name);
-                        quote! { device_extensions.#ident }
-                    }))
-                    .chain(device_features.iter().map(|name| {
-                        let ident = format_ident!("{}", name);
-                        quote! { device_features.#ident }
-                    }));
-                let requires_one_of_items = api_version
-                    .iter()
-                    .map(|(major, minor)| {
-                        let version = format_ident!("V{}_{}", major, minor);
-                        quote! {
-                            crate::RequiresAllOf(&[
-                                crate::Requires::APIVersion(crate::Version::#version),
-                            ]),
-                        }
-                    })
-                    .chain(device_extensions.iter().map(|name| {
-                        quote! {
-                            crate::RequiresAllOf(&[
-                                crate::Requires::DeviceExtension(#name),
-                            ]),
-                        }
-                    }))
-                    .chain(device_features.iter().map(|name| {
-                        quote! {
-                            crate::RequiresAllOf(&[
-                                crate::Requires::DeviceFeature(#name),
-                            ]),
-                        }
-                    }));
-                let problem = format!("uses the SPIR-V {} `{}`", item_type, name);
-
-                quote! {
-                    #arm => {
-                        if !(#(#condition_items)||*) {
-                            return Err(Box::new(crate::ValidationError {
-                                problem: #problem.into(),
-                                requires_one_of: crate::RequiresOneOf(&[
-                                    #(#requires_one_of_items)*
+            let (requires_one_of_condition_items, requires_one_of_items) =
+                if !requires_one_of.is_empty() {
+                    let &RequiresOneOf {
+                        api_version,
+                        ref device_extensions,
+                        instance_extensions: _,
+                        ref device_features,
+                    } = requires_one_of;
+                    let condition_items = api_version
+                        .iter()
+                        .map(|version| {
+                            let version = format_ident!("V{}_{}", version.0, version.1);
+                            quote! { api_version >= crate::Version::#version }
+                        })
+                        .chain(device_extensions.iter().map(|name| {
+                            let ident = format_ident!("{}", name);
+                            quote! { device_extensions.#ident }
+                        }))
+                        .chain(device_features.iter().map(|name| {
+                            let ident = format_ident!("{}", name);
+                            quote! { device_features.#ident }
+                        }))
+                        .collect();
+                    let items = api_version
+                        .iter()
+                        .map(|(major, minor)| {
+                            let version = format_ident!("V{}_{}", major, minor);
+                            quote! {
+                                crate::RequiresAllOf(&[
+                                    crate::Requires::APIVersion(crate::Version::#version),
                                 ]),
-                                vuids: &[#item_vuid],
-                                ..Default::default()
-                            }));
-                        }
-                    },
-                }
-            } else if !requires_properties.is_empty() {
-                let condition_items = requires_properties.iter().map(
-                    |RequiresProperty { name, value }| {
-                        let name = format_ident!("{}", name);
-                        let access = match value {
-                            PropertyValue::Bool => quote! {},
-                            PropertyValue::FlagsIntersects { path, ty, flag } => {
-                                let ty = format_ident!("{}", ty);
-                                let flag = format_ident!("{}", flag);
-                                quote! {
-                                    .map(|x| x.intersects(#path :: #ty :: #flag))
-                                }
                             }
-                        };
-
-                        quote! {
-                            device.physical_device().properties().#name #access .unwrap_or(false)
+                        })
+                        .chain(device_extensions.iter().map(|name| {
+                            quote! {
+                                crate::RequiresAllOf(&[
+                                    crate::Requires::DeviceExtension(#name),
+                                ]),
+                            }
+                        }))
+                        .chain(device_features.iter().map(|name| {
+                            quote! {
+                                crate::RequiresAllOf(&[
+                                    crate::Requires::DeviceFeature(#name),
+                                ]),
+                            }
+                        }))
+                        .collect();
+                    (condition_items, items)
+                } else {
+                    (Vec::new(), Vec::new())
+                };
+            let requires_properties_condition_items: Vec<TokenStream> = requires_properties
+                .iter()
+                .map(|RequiresProperty { name, value }| {
+                    let name = format_ident!("{}", name);
+                    let access = match value {
+                        PropertyValue::Bool => quote! {},
+                        PropertyValue::FlagsIntersects { path, ty, flag } => {
+                            let ty = format_ident!("{}", ty);
+                            let flag = format_ident!("{}", flag);
+                            quote! {
+                                .map(|x| x.intersects(#path :: #ty :: #flag))
+                            }
                         }
-                    },
-                );
-                let problem = {
+                    };
+                    quote! {
+                        device.physical_device().properties().#name #access .unwrap_or(false)
+                    }
+                })
+                .collect();
+            let condition_items: Vec<TokenStream> = requires_one_of_condition_items
+                .into_iter()
+                .chain(requires_properties_condition_items.into_iter())
+                .collect();
+            if condition_items.is_empty() {
+                return quote! { #arm => (), };
+            }
+            let problem = {
+                let mut parts: Vec<String> = Vec::new();
+                if !requires_one_of.is_empty() {
+                    parts.push(format!("uses the SPIR-V {} `{}`", item_type, name));
+                }
+                if !requires_properties.is_empty() {
                     let requirements_items: Vec<_> = requires_properties
                         .iter()
                         .map(|RequiresProperty { name, value }| match value {
@@ -184,31 +185,33 @@ fn spirv_reqs_output(members: &[SpirvReqsMember], is_extension: bool) -> TokenSt
                             }
                         })
                         .collect();
-
-                    format!(
-                        "uses the SPIR-V {} `{}`, but the device properties do not meet at \
-                        least one of the requirements ({})",
-                        item_type,
-                        name,
+                    parts.push(format!(
+                        "the device properties do not meet at least one of the requirements ({})",
                         requirements_items.join(" or ")
-                    )
-                };
-
+                    ));
+                }
+                parts.join(", ")
+            };
+            let requires_one_of_field = if !requires_one_of.is_empty() {
                 quote! {
-                    #arm => {
-                        if !(#(#condition_items)||*) {
-                            return Err(Box::new(crate::ValidationError {
-                                problem: #problem.into(),
-                                vuids: &[#item_vuid],
-                                ..Default::default()
-                            }));
-                        }
-                    },
+                    requires_one_of: crate::RequiresOneOf(&[
+                        #(#requires_one_of_items)*
+                    ]),
                 }
             } else {
-                quote! {
-                    #arm => (),
-                }
+                quote! {}
+            };
+            quote! {
+                #arm => {
+                    if !(#(#condition_items)||*) {
+                        return Err(Box::new(crate::ValidationError {
+                            problem: #problem.into(),
+                            #requires_one_of_field
+                            vuids: &[#item_vuid],
+                            ..Default::default()
+                        }));
+                    }
+                },
             }
         },
     );
@@ -363,7 +366,8 @@ fn make_requires(enables: &[vk_parse::Enable]) -> (RequiresOneOf, Vec<RequiresPr
         }
     }
 
-    assert!(requires_one_of.is_empty() || requires_properties.is_empty());
+    // A single SPIR-V requirement may be satisfied by any of several
+    // extensions/features OR device properties, so both may be present.
 
     requires_one_of.device_extensions.sort_unstable();
     requires_one_of.device_extensions.dedup();

@@ -2348,7 +2348,7 @@ impl RuntimeValidator<'_> {
                     let execution_scope = if let Some(scope) = instruction.execution_scope_id() {
                         get_constant(self.spirv, scope)
                             .and_then(|scope| Scope::try_from(scope as u32).ok())
-                    } else if matches!(instruction, Instruction::GroupNonUniformPartitionNV { .. })
+                    } else if matches!(instruction, Instruction::GroupNonUniformPartitionEXT { .. })
                     {
                         Some(Scope::Subgroup)
                     } else {
@@ -2627,10 +2627,12 @@ impl RuntimeValidator<'_> {
                         }));
                     }
                 }
-                Instruction::GroupNonUniformBroadcast { id, .. } => {
+                Instruction::GroupNonUniformBroadcast {
+                    invocation_id, ..
+                } => {
                     if !self.device.enabled_features().subgroup_broadcast_dynamic_id
                         && !matches!(
-                            self.spirv.id(id).instruction(),
+                            self.spirv.id(invocation_id).instruction(),
                             Instruction::Constant { .. }
                         )
                     {
