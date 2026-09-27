@@ -33,7 +33,8 @@ use crate::{
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version, VulkanError,
     VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use smallvec::{smallvec, SmallVec};
 use std::{marker::PhantomData, mem::MaybeUninit, num::NonZero, ptr, sync::Arc};

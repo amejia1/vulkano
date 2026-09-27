@@ -7,7 +7,8 @@ use crate::{
     },
     Requires, RequiresAllOf, RequiresOneOf, ValidationError, VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use std::ffi::CString;
 

@@ -18,7 +18,8 @@ use crate::{
     },
     DeviceSize, Requires, RequiresAllOf, RequiresOneOf, ValidationError, VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use smallvec::SmallVec;
 use std::{slice, sync::Arc};

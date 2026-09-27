@@ -118,7 +118,8 @@ use crate::{
     },
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, VulkanError, VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use foldhash::HashMap;
 use fragment_shading_rate::FragmentShadingRateState;

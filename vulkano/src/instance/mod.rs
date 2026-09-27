@@ -89,7 +89,8 @@ use crate::{
     VulkanObject,
 };
 pub use crate::{fns::InstanceFunctions, version::Version};
-use ash::vk::{self, Handle};use ash::vk::TaggedStructure;
+use ash::vk::TaggedStructure;
+use ash::vk::{self, Handle};
 
 use parking_lot::RwLock;
 use smallvec::SmallVec;

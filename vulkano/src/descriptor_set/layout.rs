@@ -12,7 +12,8 @@ use crate::{
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version, VulkanError,
     VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use smallvec::SmallVec;
 use std::{mem::MaybeUninit, num::NonZero, ptr, sync::Arc};

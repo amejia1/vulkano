@@ -1328,18 +1328,14 @@ fn create_render_pass(
                 let Some(dst_access) = dst_subpass_state.accesses.get(id) else {
                     continue;
                 };
-                let src_access_mask;
-                let dst_access_mask;
-
-                if src_access.access_mask.contains_writes() {
-                    src_access_mask = src_access.access_mask;
-                    dst_access_mask = dst_access.access_mask;
+                let (src_access_mask, dst_access_mask) = if src_access.access_mask.contains_writes()
+                {
+                    (src_access.access_mask, dst_access.access_mask)
                 } else if dst_access.access_mask.contains_writes() {
-                    src_access_mask = AccessFlags::empty();
-                    dst_access_mask = AccessFlags::empty();
+                    (AccessFlags::empty(), AccessFlags::empty())
                 } else {
                     continue;
-                }
+                };
 
                 let dependency =
                     get_or_insert_subpass_dependency(&mut dependencies, src_subpass, dst_subpass);

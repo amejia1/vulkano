@@ -48,7 +48,8 @@ use crate::{
     pipeline::graphics::depth_stencil::CompareOp,
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, VulkanError, VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use std::{mem::MaybeUninit, num::NonZero, ptr, sync::Arc};
 

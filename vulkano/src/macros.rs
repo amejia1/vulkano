@@ -637,6 +637,7 @@ macro_rules! vulkan_enum {
         $(#[doc = $ty_doc])*
         #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
         #[non_exhaustive]
+        #[allow(deprecated)]
         #[repr($repr)]
         pub enum $ty {
             $(

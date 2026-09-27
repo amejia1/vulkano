@@ -104,7 +104,8 @@ use crate::{
     sync::HostAccessError,
     DeviceSize, Validated, ValidationError, Version, VulkanError, VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use std::{
     cmp,

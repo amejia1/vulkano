@@ -72,7 +72,8 @@ use crate::{
     RawFd, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use core::slice;
 use smallvec::SmallVec;
