@@ -21,7 +21,8 @@ use crate::{
     self_referential::self_referential,
     Requires, RequiresAllOf, RequiresOneOf, ValidationError,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use foldhash::HashMap;
 use smallvec::SmallVec;
 
@@ -434,7 +435,7 @@ impl<'a> ColorBlendState<'a> {
         let ColorBlendStateExtensionsVk { color_write_vk } = extensions_vk;
 
         if let Some(next) = color_write_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

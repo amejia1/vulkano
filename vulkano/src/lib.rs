@@ -420,6 +420,13 @@ impl Display for VulkanError {
                 "an image creation failed because internal resources required for compression are \
                 exhausted"
             }
+            VulkanError::NotEnoughSpace => {
+                "a descriptor set update failed because there was not enough space in the \
+                descriptor pool"
+            }
+            VulkanError::PresentTimingQueueFull => {
+                "the presentation timing queue is full"
+            }
             VulkanError::Unnamed(result) => {
                 return write!(f, "unnamed error, VkResult value {}", result.as_raw());
             }

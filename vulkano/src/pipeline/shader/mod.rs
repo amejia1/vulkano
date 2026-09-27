@@ -7,7 +7,8 @@ use crate::{
     },
     Requires, RequiresAllOf, RequiresOneOf, ValidationError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use std::ffi::CString;
 
 pub(crate) mod inout_interface;
@@ -529,7 +530,7 @@ impl<'a> PipelineShaderStageCreateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = required_subgroup_size_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

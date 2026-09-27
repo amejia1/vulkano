@@ -11,7 +11,8 @@ use crate::{
     DeviceSize, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, VulkanError,
     VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use smallvec::{smallvec, SmallVec};
 use std::{
     fmt::Debug,
@@ -578,19 +579,19 @@ impl PresentInfo {
             .results(results_vk);
 
         if let Some(next) = present_regions_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = present_id_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = present_fence_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = present_mode_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

@@ -569,6 +569,7 @@ macro_rules! vulkan_enum {
         $(#[doc = $ty_doc])*
         #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
         #[repr($repr)]
+        #[allow(deprecated)]
         pub enum $ty {
             $(
                 $(#[doc = $flag_doc])*
@@ -578,6 +579,7 @@ macro_rules! vulkan_enum {
 
         impl $ty {
             #[allow(dead_code)]
+            #[allow(deprecated)]
             pub(crate) const COUNT: usize = [
                 $(ash::vk::$ty_ffi::$flag_name_ffi.as_raw()),+
             ].len();
@@ -594,6 +596,7 @@ macro_rules! vulkan_enum {
             }
         }
 
+        #[allow(deprecated)]
         impl TryFrom<ash::vk::$ty_ffi> for $ty {
             type Error = ();
 
@@ -644,6 +647,7 @@ macro_rules! vulkan_enum {
 
         impl $ty {
             #[allow(dead_code)]
+            #[allow(deprecated)]
             pub(crate) const COUNT: usize = [
                 $(ash::vk::$ty_ffi::$flag_name_ffi.as_raw()),+
             ].len();
@@ -802,6 +806,7 @@ macro_rules! vulkan_enum {
         }
     }
 
+    #[allow(deprecated)]
     impl TryFrom<ash::vk::$ty_ffi> for $ty {
         type Error = ();
 

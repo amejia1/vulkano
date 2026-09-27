@@ -9,7 +9,8 @@ use crate::{
     DeviceSize, RawFd, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use std::{
     ffi::c_void,
     mem::MaybeUninit,
@@ -1323,21 +1324,21 @@ impl<'a> MemoryAllocateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = dedicated_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = export_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = flags_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = import_vk {
             match next {
-                MemoryImportInfoVk::Fd(next) => val_vk = val_vk.push_next(next),
-                MemoryImportInfoVk::Win32Handle(next) => val_vk = val_vk.push_next(next),
+                MemoryImportInfoVk::Fd(next) => val_vk = val_vk.push(next),
+                MemoryImportInfoVk::Win32Handle(next) => val_vk = val_vk.push(next),
             }
         }
 
@@ -1974,7 +1975,7 @@ impl<'a> MemoryMapInfo<'a> {
         let MemoryMapInfoExtensionsVk { placed_vk } = extensions_vk;
 
         if let Some(next) = placed_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

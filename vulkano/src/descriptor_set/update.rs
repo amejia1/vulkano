@@ -18,7 +18,8 @@ use crate::{
     },
     DeviceSize, Requires, RequiresAllOf, RequiresOneOf, ValidationError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use smallvec::SmallVec;
 use std::{slice, sync::Arc};
 
@@ -1477,10 +1478,10 @@ impl<'a> WriteDescriptorSet<'a> {
                 DescriptorTypeExtensionVk::AccelerationStructure(next) => {
                     val_vk = val_vk
                         .descriptor_count(next.acceleration_structure_count)
-                        .push_next(next)
+                        .push(next)
                 }
                 DescriptorTypeExtensionVk::InlineUniformBlock(next) => {
-                    val_vk = val_vk.descriptor_count(next.data_size).push_next(next)
+                    val_vk = val_vk.descriptor_count(next.data_size).push(next)
                 }
             }
         }

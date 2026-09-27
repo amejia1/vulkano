@@ -125,7 +125,8 @@ use crate::{
     device::{DeviceFeatures, DeviceProperties},
     pipeline::graphics::vertex_input::VertexInputRate,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use bytemuck::{Pod, Zeroable};
 use foldhash::HashMap;
 use smallvec::SmallVec;
@@ -491,7 +492,7 @@ impl CommandBufferInheritanceInfo {
         } = extensions_vk;
 
         if let Some(next) = rendering_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk
@@ -1164,11 +1165,11 @@ impl SubmitInfo<'_> {
         } = extensions_vk;
 
         if let Some(next) = timeline_semaphore_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = protected_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

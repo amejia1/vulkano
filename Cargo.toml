@@ -44,7 +44,7 @@ path = "vulkano-util"
 # and run `cargo run --bin autogen` to update the generated files.
 # All versions of vk.xml can be found at:
 # https://github.com/KhronosGroup/Vulkan-Headers/commits/main/registry/vk.xml
-ash = "0.38.0"
+ash = { git = "https://github.com/amejia1/ash", branch = "master", features = ["provisional"] }
 bytemuck = "1.9"
 concurrent-slotmap = { git = "https://github.com/vulkano-rs/concurrent-slotmap", rev = "6c328e2857f8461c177046414962ee6c7784f61c" }
 crossbeam-queue = "0.3"

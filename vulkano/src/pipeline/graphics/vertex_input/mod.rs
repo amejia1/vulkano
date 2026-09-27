@@ -104,7 +104,8 @@ use crate::{
     pipeline::inout_interface::{ShaderInterfaceLocationInfo, ShaderInterfaceLocationWidth},
     DeviceSize, Requires, RequiresAllOf, RequiresOneOf, ValidationError,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use foldhash::HashMap;
 use smallvec::SmallVec;
 
@@ -473,7 +474,7 @@ impl VertexInputState {
         let VertexInputStateExtensionsVk { divisor_vk } = extensions_vk;
 
         if let Some(next) = divisor_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

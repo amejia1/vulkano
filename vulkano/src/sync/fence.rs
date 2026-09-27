@@ -33,7 +33,8 @@ use crate::{
     RawFd, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use smallvec::SmallVec;
 use std::{
     future::Future,
@@ -1143,7 +1144,7 @@ impl<'a> FenceCreateInfo<'a> {
         let FenceCreateInfoExtensionsVk { export_vk } = extensions_vk;
 
         if let Some(next) = export_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

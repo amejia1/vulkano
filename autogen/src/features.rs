@@ -750,7 +750,7 @@ impl FeaturesStruct {
 
         quote! {
             if let Some(next) = &mut extensions_vk.#var_name {
-                val_vk = val_vk.push_next(next);
+                val_vk = val_vk.push(next);
             }
         }
     }
@@ -1128,7 +1128,12 @@ enum Requires {
 
 impl Requires {
     fn from_provided_by(provided_by: &str, extensions: &IndexMap<&str, &Extension>) -> Self {
-        if let Some(version) = provided_by.strip_prefix("VK_VERSION_") {
+        let version = provided_by
+            .strip_prefix("VK_VERSION_")
+            .or_else(|| provided_by.strip_prefix("VK_BASE_VERSION_"))
+            .or_else(|| provided_by.strip_prefix("VK_COMPUTE_VERSION_"))
+            .or_else(|| provided_by.strip_prefix("VK_GRAPHICS_VERSION_"));
+        if let Some(version) = version {
             let (major, minor) = version.split_once('_').unwrap();
             Self::APIVersion(Version {
                 major: major.parse().unwrap(),

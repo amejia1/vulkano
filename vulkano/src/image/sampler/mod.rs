@@ -48,7 +48,8 @@ use crate::{
     pipeline::graphics::depth_stencil::CompareOp,
     Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use std::{mem::MaybeUninit, num::NonZero, ptr, sync::Arc};
 
 pub mod ycbcr;
@@ -1154,11 +1155,11 @@ impl<'a> SamplerCreateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = reduction_mode_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = ycbcr_conversion_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk

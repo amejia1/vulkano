@@ -355,7 +355,8 @@ use crate::{
     NonExhaustive, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk;
+use ash::vk;use ash::vk::TaggedStructure;
+
 use parking_lot::Mutex;
 use smallvec::SmallVec;
 use std::{
@@ -2661,23 +2662,23 @@ impl<'a> SwapchainCreateInfo<'a> {
         } = extensions_vk;
 
         if let Some(next) = full_screen_exclusive_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = full_screen_exclusive_win32_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = image_format_list_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = present_modes_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         if let Some(next) = present_scaling_vk {
-            val_vk = val_vk.push_next(next);
+            val_vk = val_vk.push(next);
         }
 
         val_vk
