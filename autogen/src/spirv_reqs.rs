@@ -165,7 +165,7 @@ fn spirv_reqs_output(members: &[SpirvReqsMember], is_extension: bool) -> TokenSt
                 .collect();
             let condition_items: Vec<TokenStream> = requires_one_of_condition_items
                 .into_iter()
-                .chain(requires_properties_condition_items.into_iter())
+                .chain(requires_properties_condition_items)
                 .collect();
             if condition_items.is_empty() {
                 return quote! { #arm => (), };

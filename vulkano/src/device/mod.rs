@@ -142,7 +142,8 @@ use crate::{
     RawFd, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk::{self, Handle};use ash::vk::TaggedStructure;
+use ash::vk::TaggedStructure;
+use ash::vk::{self, Handle};
 
 use parking_lot::Mutex;
 use smallvec::{smallvec, SmallVec};

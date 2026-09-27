@@ -23,7 +23,8 @@ use crate::{
     DebugWrapper, ExtensionProperties, Requires, RequiresAllOf, RequiresOneOf, Validated,
     ValidationError, Version, VulkanError, VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use parking_lot::RwLock;
 #[cfg(feature = "raw_window_handle")]

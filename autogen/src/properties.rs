@@ -1172,7 +1172,10 @@ fn is_mappable_property_type(ty_c: &str) -> bool {
     // Types handled/skipped specially rather than mapped to a value type.
     if matches!(
         ty_c,
-        "char" | "void" | "VkStructureType" | "VkPhysicalDeviceLimits"
+        "char"
+            | "void"
+            | "VkStructureType"
+            | "VkPhysicalDeviceLimits"
             | "VkPhysicalDeviceSparseProperties"
     ) {
         return true;
@@ -1215,9 +1218,7 @@ fn c_type_to_vulkano_type(
         | "robustUniformBufferOffsetAlignment"
         | "storageTexelBufferOffsetAlignmentBytes"
         | "uniformTexelBufferOffsetAlignmentBytes"
-        | "minPlacedMemoryMapAlignment" => {
-            Some(quote! { DeviceAlignment })
-        }
+        | "minPlacedMemoryMapAlignment" => Some(quote! { DeviceAlignment }),
         _ => {
             let inner = if ty_c == "char" && array_len.is_some() {
                 quote! { String }

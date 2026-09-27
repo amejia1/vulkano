@@ -125,7 +125,8 @@ use crate::{
     device::{DeviceFeatures, DeviceProperties},
     pipeline::graphics::vertex_input::VertexInputRate,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use bytemuck::{Pod, Zeroable};
 use foldhash::HashMap;

@@ -91,7 +91,8 @@ use crate::{
     shader::spirv::ImageFormat,
     DeviceSize, Requires, RequiresAllOf, RequiresOneOf, ValidationError, Version,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use std::marker::PhantomData;
 

@@ -4,8 +4,8 @@ use crate::{
     device::Device, macros::vulkan_enum, Requires, RequiresAllOf, RequiresOneOf, ValidationError,
     Version,
 };
-use ash::vk;use ash::vk::TaggedStructure;
-
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 /// The state in a graphics pipeline describing the tessellation shader execution of a graphics
 /// pipeline.

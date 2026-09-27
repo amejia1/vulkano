@@ -424,9 +424,7 @@ impl Display for VulkanError {
                 "a descriptor set update failed because there was not enough space in the \
                 descriptor pool"
             }
-            VulkanError::PresentTimingQueueFull => {
-                "the presentation timing queue is full"
-            }
+            VulkanError::PresentTimingQueueFull => "the presentation timing queue is full",
             VulkanError::Unnamed(result) => {
                 return write!(f, "unnamed error, VkResult value {}", result.as_raw());
             }

@@ -21,7 +21,8 @@ use crate::{
     self_referential::self_referential,
     Requires, RequiresAllOf, RequiresOneOf, ValidationError,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use foldhash::HashMap;
 use smallvec::SmallVec;

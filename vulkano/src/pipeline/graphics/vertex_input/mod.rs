@@ -104,7 +104,8 @@ use crate::{
     pipeline::inout_interface::{ShaderInterfaceLocationInfo, ShaderInterfaceLocationWidth},
     DeviceSize, Requires, RequiresAllOf, RequiresOneOf, ValidationError,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use foldhash::HashMap;
 use smallvec::SmallVec;

@@ -355,7 +355,8 @@ use crate::{
     NonExhaustive, Requires, RequiresAllOf, RequiresOneOf, Validated, ValidationError, Version,
     VulkanError, VulkanObject,
 };
-use ash::vk;use ash::vk::TaggedStructure;
+use ash::vk;
+use ash::vk::TaggedStructure;
 
 use parking_lot::Mutex;
 use smallvec::SmallVec;

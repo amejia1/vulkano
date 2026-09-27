@@ -2627,9 +2627,7 @@ impl RuntimeValidator<'_> {
                         }));
                     }
                 }
-                Instruction::GroupNonUniformBroadcast {
-                    invocation_id, ..
-                } => {
+                Instruction::GroupNonUniformBroadcast { invocation_id, .. } => {
                     if !self.device.enabled_features().subgroup_broadcast_dynamic_id
                         && !matches!(
                             self.spirv.id(invocation_id).instruction(),

@@ -13,7 +13,7 @@ use crate::{
     },
     ClearValues, Id, InvalidSlotError, ObjectType, TaskContext, TaskError,
 };
-use ash::vk;
+use ash::vk::{self, TaggedStructure};
 use concurrent_slotmap::hyaline;
 use smallvec::{smallvec, SmallVec};
 use std::{error::Error, fmt, iter, mem, ops::Range, ptr, sync::Arc};
@@ -694,7 +694,7 @@ impl<W: ?Sized + 'static> ExecutableTaskGraph<W> {
             .then(|| vk::SwapchainPresentFenceInfoEXT::default().fences(&fences_vk));
 
         if let Some(fence_info_vk) = fence_info_vk.as_mut() {
-            present_info_vk = present_info_vk.push_next(fence_info_vk);
+            present_info_vk = present_info_vk.push(fence_info_vk);
         }
 
         let fns = self.device().fns();
