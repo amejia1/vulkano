@@ -92,7 +92,7 @@ checksum = "175571dd1d178ced59193a6fc02dde1b972eb0bc56c892cde9beeceac5bf0f6b"
 [[package]]
 name = "ash"
 version = "0.38.0+1.4.352"
-source = "git+https://github.com/amejia1/ash?branch=master#f4c2ca3e4f6b998d5254ad101a32f024d87cdec2"
+source = "git+https://github.com/amejia1/ash?branch=master#2a5f7debb110a44e821ac07cb3add01a8516961e"
 dependencies = [
  "libloading",
 ]
