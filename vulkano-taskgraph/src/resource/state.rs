@@ -1076,7 +1076,7 @@ impl Flight {
         biased_frame: u64,
     ) -> Result<u64, u64> {
         self.biased_complete_frame
-            .fetch_update(Relaxed, Relaxed, |biased_complete_frame| {
+            .try_update(Relaxed, Relaxed, |biased_complete_frame| {
                 (biased_complete_frame < biased_frame).then_some(biased_frame)
             })
     }
