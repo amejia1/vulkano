@@ -121,6 +121,11 @@
 //!
 //! For details on what these shader types mean, [see Vulkano's documentation][pipeline].
 //!
+//! If unspecified, the behavior is the same as the behavior of the compiler of choice when the
+//! shader stage is unspecified. In particular, this means that shaderc will expect a `#pragma
+//! shader_stage(<stage>)` directive in the code, and slangc will expect the entry point(s) to be
+//! annotated with `[shader("<stage>")]`.
+//!
 //! Cannot be defined alongside the [`bytes`] option.
 //!
 //! ## `path`
@@ -202,7 +207,13 @@
 //!
 //! Provides the entry point of the shader source to compile.
 //!
-//! By default, `main` is compiled.
+//! If unspecified, the behavior is the same as the behavior of the compiler of choice when the
+//! entry point is unspecified. In particular, this means that the entry point defaults to `main`,
+//! except when using slangc and the [`ty`] option is also left out, in which case slangc searches
+//! for entry points annotated with `[shader("<stage>")]`.
+//!
+//! This option cannot be used when compiling with shaderc as it has no support for compiling any
+//! entry point other than `main`.
 //!
 //! Cannot be defined alongside the [`bytes`] option.
 //!
@@ -219,12 +230,12 @@
 //!
 //! Provides the compiler to invoke. It can be any of the following:
 //!
-//! - `shaderc` (default for GLSL and HLSL)
-//! - `slangc` (default for Slang)
+//! - `shaderc` (default for GLSL)
+//! - `slangc` (default for HLSL and Slang)
 //!
 //! Here are the source languages supported for each compiler:
 //!
-//! - `shaderc`: GLSL and HLSL
+//! - `shaderc`: GLSL
 //! - `slangc`: GLSL, HLSL and Slang
 //!
 //! When using `shaderc`, you must have [`glslc`] available on your `PATH`. When using `slangc`,
@@ -520,6 +531,7 @@ use foldhash::HashMap;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::{
+    collections::hash_map::Entry,
     env, fs,
     path::{Path, PathBuf},
 };
@@ -546,6 +558,15 @@ pub fn include_vulkano_glsl(input: proc_macro::TokenStream) -> proc_macro::Token
 }
 
 #[proc_macro]
+pub fn include_vulkano_slang(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    parse_macro_input!(input as syn::parse::Nothing);
+
+    let include_string = include_str!("../include/vulkano.slang");
+
+    quote! { #include_string }.into()
+}
+
+#[proc_macro]
 pub fn shader(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as MacroInput);
 
@@ -564,7 +585,8 @@ fn shader_inner(input: MacroInput) -> Result<TokenStream> {
             state.process_shader(None, shader_fields)?;
         }
         Shaders::Multiple(shaders) => {
-            for (shader_name, shader_fields) in shaders {
+            for (shader_ident, shader_fields) in shaders {
+                let shader_name = shader_ident.to_string();
                 state.process_shader(Some(shader_name), shader_fields)?;
             }
         }
@@ -651,7 +673,7 @@ impl<'a> MacroState<'a> {
                     self.options,
                     &source_code,
                     working_dir,
-                    shader_kind.unwrap(),
+                    shader_kind,
                     source_language,
                     entry_point.as_deref(),
                     compiler,
@@ -799,7 +821,7 @@ struct MacroInput {
 
 enum Shaders {
     Single(ShaderFields),
-    Multiple(HashMap<String, ShaderFields>),
+    Multiple(HashMap<Ident, ShaderFields>),
 }
 
 #[derive(Default)]
@@ -962,20 +984,7 @@ impl MacroInputParser {
             }
         }
 
-        if self.shaders.is_none()
-            || matches!(&self.shaders, Some(Shaders::Multiple(shaders)) if shaders.is_empty())
-        {
-            bail!(
-                "please specify at least one shader (e.g., `ty: \"vertex\", path: \
-                \"entry_point.glsl\"`)",
-            );
-        }
-
-        if let Some(Shaders::Single(shader_fields)) = &self.shaders {
-            shader_fields.check_valid(Span::call_site(), None, None)?;
-        }
-
-        Ok(())
+        self.check_valid()
     }
 
     fn parse_shader_field(
@@ -1029,7 +1038,7 @@ impl MacroInputParser {
         self.global_compiler = Some(match lit.value().as_str() {
             "shaderc" => Compiler::Shaderc,
             "slangc" => Compiler::Slangc,
-            compiler => bail!(lit, "expected `shaderc` or `slangc, found `{compiler}`"),
+            compiler => bail!(lit, "expected `shaderc` or `slangc`, found `{compiler}`"),
         });
 
         Ok(())
@@ -1054,14 +1063,19 @@ impl MacroInputParser {
 
         while !in_braces.is_empty() {
             let shader_ident = in_braces.parse::<Ident>()?;
-            let shader_name = shader_ident.to_string();
 
-            if shaders.contains_key(&shader_name) {
-                bail!(
-                    shader_ident,
-                    "shader entry `{shader_name}` is already defined",
-                );
-            }
+            let shader_fields = match shaders.entry(shader_ident) {
+                Entry::Occupied(entry) => {
+                    let shader_ident = entry.key();
+                    let shader_name = shader_ident.to_string();
+
+                    bail!(
+                        shader_ident,
+                        "shader entry `{shader_name}` is already defined",
+                    );
+                }
+                Entry::Vacant(entry) => entry.insert(ShaderFields::default()),
+            };
 
             in_braces.parse::<Token![:]>()?;
 
@@ -1076,10 +1090,7 @@ impl MacroInputParser {
                 match field_name.as_str() {
                     "ty" | "path" | "src" | "bytes" | "lang" | "entry_point" | "compiler"
                     | "define" => {
-                        shaders
-                            .entry(shader_name.clone())
-                            .or_default()
-                            .parse_shader_field(&in_shader_definition, &field_name)?;
+                        shader_fields.parse_shader_field(&in_shader_definition, &field_name)?;
                     }
                     _ => bail!(
                         field_ident,
@@ -1096,12 +1107,6 @@ impl MacroInputParser {
             if !in_braces.is_empty() {
                 in_braces.parse::<Token![,]>()?;
             }
-
-            shaders.get(&shader_name).unwrap().check_valid(
-                shader_ident.span(),
-                self.global_source_language,
-                self.global_compiler,
-            )?;
         }
 
         if shaders.is_empty() {
@@ -1268,6 +1273,35 @@ impl MacroInputParser {
         }
 
         self.dump = Some(lit);
+
+        Ok(())
+    }
+
+    fn check_valid(&self) -> Result {
+        match &self.shaders {
+            Some(Shaders::Single(shader_fields)) => {
+                shader_fields.check_valid(
+                    Span::call_site(),
+                    self.global_source_language,
+                    self.global_compiler,
+                )?;
+            }
+            Some(Shaders::Multiple(shaders)) if !shaders.is_empty() => {
+                for (shader_ident, shader_fields) in shaders {
+                    shader_fields.check_valid(
+                        shader_ident.span(),
+                        self.global_source_language,
+                        self.global_compiler,
+                    )?;
+                }
+            }
+            Some(Shaders::Multiple(_)) | None => {
+                bail!(
+                    "please specify at least one shader (e.g., `ty: \"vertex\", path: \
+                    \"entry_point.glsl\"`)",
+                );
+            }
+        }
 
         Ok(())
     }
@@ -1521,20 +1555,11 @@ impl ShaderFields {
         global_source_language: Option<SourceLanguage>,
         global_compiler: Option<Compiler>,
     ) -> Result {
-        let Some(source_kind) = &self.source_kind else {
+        if self.source_kind.is_none() {
             return Err(Error::new(
                 span,
                 "please specify the shader source (e.g., `path: \"entry_point.glsl\"`)",
             ));
-        };
-
-        if !matches!(source_kind, SourceKind::Precompiled(_)) {
-            if self.shader_kind.is_none() {
-                return Err(Error::new(
-                    span,
-                    "please specify the shader type (e.g., `ty: \"vertex\"`)",
-                ));
-            }
         }
 
         let source_language = self
@@ -1545,6 +1570,14 @@ impl ShaderFields {
             .compiler
             .or(global_compiler)
             .unwrap_or(source_language.default_compiler());
+
+        if self.entry_point.is_some() && compiler == Compiler::Shaderc {
+            return Err(Error::new(
+                span,
+                "the `entry_point` option cannot be used when compiling with shaderc; please \
+                remove it",
+            ));
+        }
 
         if !compiler.is_valid_for(source_language) {
             return Err(Error::new(
@@ -1638,13 +1671,13 @@ impl SourceLanguage {
 
     fn default_compiler(self) -> Compiler {
         match self {
-            Self::Glsl | Self::Hlsl => Compiler::Shaderc,
-            Self::Slang => Compiler::Slangc,
+            Self::Glsl => Compiler::Shaderc,
+            Self::Hlsl | Self::Slang => Compiler::Slangc,
         }
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Compiler {
     Shaderc,
     Slangc,
@@ -1667,9 +1700,7 @@ impl Compiler {
 
     fn is_valid_for(self, source_language: SourceLanguage) -> bool {
         match self {
-            Compiler::Shaderc => {
-                matches!(source_language, SourceLanguage::Glsl | SourceLanguage::Hlsl)
-            }
+            Compiler::Shaderc => matches!(source_language, SourceLanguage::Glsl),
             Compiler::Slangc => {
                 matches!(
                     source_language,
