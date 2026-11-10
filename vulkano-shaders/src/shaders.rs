@@ -208,7 +208,7 @@ fn thread_id() -> usize {
     }
 
     let id = COUNTER
-        .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
+        .try_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
         .expect("we somehow managed to have more than `usize::MAX` threads");
 
     CURRENT.set(Some(id));
